@@ -117,7 +117,9 @@
                 // check if href contains #!/
                 if (href && href.indexOf('#!/') !== -1) {
                     // check if URI is inside `startUrl`.
+console.log('start: ' + startUrl + ', href=' + href);
                     if (href.indexOf(startUrl) !== -1) {
+                console.log('Checking ' + href);
                         // make sure URL isn't in pages-array already
                         if (!_.contains(pages, href)) {
                             // check if the URL should be ignored
@@ -202,16 +204,17 @@
         var compactHtml = _.compact(htmlCode.split('\n')).join('\n');
 
         var totalFileName = page.url.substring(startUrl.length);
-        var decodedParameter = totalFileName.split('#!/')[1];
-        var parameter = decodedParameter ? decodedParameter : '';
-        var folderName = '_escaped_fragment_' + totalFileName.split('#!/')[0];
-        var totalFolderName = folderName + (parameter ? fs.separator + parameter : '');
+        var parameter = totalFileName.split('#!')[1];
+        var folderName = '_escaped_fragment_' + totalFileName.split('#!')[0];
+        console.log('FOLDER NAME: ' + folderName);
+        var totalFolderName = folderName + (parameter ? fs.separator + encodeURIComponent(parameter) : '');
+        console.log('TOTAL FOLDER NAME: ' + totalFolderName);
 
         // create folder/tree with name `totalFolderName`
-        fs.makeTree(totalFolderName);
+        fs.makeTree(folderName);
 
         // create file index.html in folder with the content `compactHtml`
-        fs.write(encodeForBot(totalFolderName) + fs.separator + 'index.html', compactHtml, 'w');
+        fs.write(totalFolderName, compactHtml, 'w');
 
         removeA(notVisitedPages, url);
         visitingPages--;
@@ -237,6 +240,11 @@
     var processUrl = function (url) {
         console.log("processing url: " + url);
         var page = webpage.create();
+        var system = require('system');
+
+        page.onConsoleMessage = function(msg) {
+            system.stderr.writeLine( 'console: ' + msg );
+        };
 
 
         var pageIsOpened = $.Deferred();
@@ -250,16 +258,32 @@
             }
         });
 
-        // Wait for 3 seconds once the page is loaded and then
-        //
         // * inject jquery into the page
         // * start processing the page
         pageIsOpened.done(function (page) {
-            setTimeout(function () {
-                page.includeJs('http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js', function () {
-                    processPage(page, url);
-                });
-            }, 3000);
+            var delay,
+                checker = function() {
+                
+                    console.log('Waiting for loading');
+                    var result = page.evaluate(function () {
+                        var body = document.getElementsByTagName('body')[0];
+                        return body.getAttribute('data-status') == 'ready';
+                    });
+
+                    if (result) {
+                        clearTimeout(delay);
+                        console.log('cleared timer');
+
+                        setTimeout(function() {
+                            console.log('processing page');
+                            page.includeJs('http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js', function () {
+                                processPage(page, url);
+                            })},
+                            1 * 100);
+                    }
+                }
+
+            delay = setTimeout(checker, 1 * 100);
         });
     };
 

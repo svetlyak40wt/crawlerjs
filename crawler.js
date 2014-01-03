@@ -263,7 +263,10 @@ console.log('start: ' + startUrl + ', href=' + href);
         // * inject jquery into the page
         // * start processing the page
         pageIsOpened.done(function (page) {
-            var delay,
+            var timer,
+                interval = 50,
+                start = new Date();
+                timeout = 5 * 1000, // 5 seconds
                 checker = function() {
                 
                     console.log('Waiting for loading');
@@ -273,19 +276,23 @@ console.log('start: ' + startUrl + ', href=' + href);
                     });
 
                     if (result) {
-                        clearTimeout(delay);
+                        clearInterval(timer);
                         console.log('cleared timer');
 
-                        setTimeout(function() {
-                            console.log('processing page');
-                            page.includeJs('http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js', function () {
-                                processPage(page, url);
-                            })},
-                            1 * 100);
+                        console.log('processing page');
+                        page.includeJs('http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js',
+                                       function () {
+                                           processPage(page, url)});
+                    } else {
+                        var now = new Date();
+                        if (now - start >= timeout) {
+                            clearInterval(timer);
+                            console.log('WARNING: timeout for page ' + url);
+                        }
                     }
                 }
 
-            delay = setTimeout(checker, 1 * 100);
+            timer = setInterval(checker, interval);
         });
     };
 

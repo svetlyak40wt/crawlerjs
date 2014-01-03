@@ -207,14 +207,14 @@ console.log('start: ' + startUrl + ', href=' + href);
         var parameter = totalFileName.split('#!')[1];
         var folderName = '_escaped_fragment_' + totalFileName.split('#!')[0];
         console.log('FOLDER NAME: ' + folderName);
-        var totalFolderName = folderName + (parameter ? fs.separator + encodeURIComponent(parameter) : '');
+        var totalFolderName = folderName + (parameter ? fs.separator + parameter : '');
         console.log('TOTAL FOLDER NAME: ' + totalFolderName);
 
         // create folder/tree with name `totalFolderName`
-        fs.makeTree(folderName);
+        fs.makeTree(totalFolderName)
 
         // create file index.html in folder with the content `compactHtml`
-        fs.write(totalFolderName, compactHtml, 'w');
+        fs.write(encodeForBot(totalFolderName) + fs.separator + 'index.html', compactHtml, 'w');
 
         removeA(notVisitedPages, url);
         visitingPages--;

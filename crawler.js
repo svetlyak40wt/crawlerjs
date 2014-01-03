@@ -207,7 +207,9 @@ console.log('start: ' + startUrl + ', href=' + href);
         var parameter = totalFileName.split('#!')[1];
         var folderName = '_escaped_fragment_' + totalFileName.split('#!')[0];
         console.log('FOLDER NAME: ' + folderName);
-        var totalFolderName = folderName + (parameter ? fs.separator + parameter : '');
+        var totalFolderName = folderName + ((parameter && parameter[0] != fs.separator) ?
+                                            fs.separator + parameter :
+                                            parameter || '');
         console.log('TOTAL FOLDER NAME: ' + totalFolderName);
 
         // create folder/tree with name `totalFolderName`
